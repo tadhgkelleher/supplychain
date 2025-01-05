@@ -133,7 +133,9 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     },
     physics: {
-      enabled: false
+      enabled: false,
+      stabilization: { iterations: 200 },
+      hierarchicalRepulsion: { nodeDistance: 200 }
     },
     interaction: {
       hover: true,
@@ -192,12 +194,12 @@ document.addEventListener("DOMContentLoaded", function() {
     options.physics.enabled = physicsEnabled;
     network.setOptions(options);
 
-    // Apply smooth transition by enabling physics
+    // Apply smooth transition by enabling physics for gradual movement
     network.physics.setOptions({ enabled: true });
     network.stabilize();
     setTimeout(() => {
       network.physics.setOptions({ enabled: false });
-    }, 1000); // Disable physics after stabilization
+    }, 2000); // Physics remains active for 2 seconds for the explosion effect
 
     toggleButton.textContent = physicsEnabled ? "Lock Positions" : "Unlock Positions";
   });
