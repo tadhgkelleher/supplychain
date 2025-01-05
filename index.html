@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supply Chain Connections</title>
+  <title>Supply Chain Network</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet">
   <style>
-    #supply-chain-graph-container {
+    #supply-chain-container {
       position: relative;
-      background-color: black;
+      background-color: #f8f9fa;
       margin: 0 auto;
       width: 100%;
       padding: 10px;
@@ -20,6 +20,9 @@
     #supply-chain-graph {
       height: 700px;
       width: 100%;
+      background-color: white;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
     }
 
     .toggle-physics-button {
@@ -29,7 +32,7 @@
       border: none;
       border-radius: 4px;
       font-size: 18px;
-      margin: 0 auto;
+      margin: 0 auto 20px;
       cursor: pointer;
       text-align: center;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -37,113 +40,159 @@
       top: 10px;
       z-index: 9999;
     }
+
+    .toggle-physics-button:hover {
+      background-color: #357abd;
+    }
   </style>
 </head>
 <body>
-
-<div id="supply-chain-graph-container">
-  <button class="toggle-physics-button">Toggle Physics</button>
+<div id="supply-chain-container">
+  <button class="toggle-physics-button">Unlock Positions</button>
   <div id="supply-chain-graph"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const supplyChainData = [
-      { id: 1, title: "Supplier A", tags: ["Raw Materials", "Mining", "Steel"] },
-      { id: 2, title: "Supplier B", tags: ["Raw Materials", "Mining", "Copper"] },
-      { id: 3, title: "Manufacturer C", tags: ["Steel", "Fabrication", "Automobile"] },
-      { id: 4, title: "Manufacturer D", tags: ["Copper", "Fabrication", "Electronics"] },
-      { id: 5, title: "Distributor E", tags: ["Automobile", "Logistics"] },
-      { id: 6, title: "Distributor F", tags: ["Electronics", "Logistics"] },
-      { id: 7, title: "Retailer G", tags: ["Automobile", "Sales"] },
-      { id: 8, title: "Retailer H", tags: ["Electronics", "Sales"] },
-      { id: 9, title: "Consumer I", tags: ["Automobile", "Consumer"] },
-      { id: 10, title: "Consumer J", tags: ["Electronics", "Consumer"] },
-    ];
+document.addEventListener("DOMContentLoaded", function() {
+  const supplyChainNodes = [
+    { id: 1, title: "Organic Wheat Flour", tags: ["Grain Storage", "Quality Testing", "Milling", "Packaging", "Local Farms", "Organic Certification", "Temperature Control", "Moisture Control"] },
+    { id: 2, title: "Fresh Eggs", tags: ["Local Farms", "Cold Storage", "Quality Testing", "Packaging", "Farm Certification", "Temperature Control"] },
+    { id: 3, title: "Dairy Products", tags: ["Pasteurization", "Cold Storage", "Quality Testing", "Local Dairy", "Temperature Control", "Packaging"] },
+    { id: 4, title: "Production Facility", tags: ["Quality Control", "Mixing", "Baking", "Packaging", "Temperature Control", "Food Safety", "Equipment Maintenance"] },
+    { id: 5, title: "Regional Distribution", tags: ["Warehousing", "Cold Chain", "Inventory Management", "Quality Checks", "Transportation", "Order Processing"] },
+    { id: 6, title: "Retail Partners", tags: ["Grocery Stores", "Bakeries", "Restaurants", "Hotels", "Direct Sales", "Order Management"] },
+    { id: 7, title: "Quality Control", tags: ["Safety Testing", "Temperature Monitoring", "Batch Testing", "Documentation", "Certification", "Compliance"] },
+    { id: 8, title: "Packaging", tags: ["Primary Packaging", "Secondary Packaging", "Labels", "Storage", "Recycling", "Materials Management"] },
+    { id: 9, title: "Transportation", tags: ["Cold Chain", "Route Planning", "Fleet Management", "Delivery Scheduling", "GPS Tracking"] },
+    { id: 10, title: "Storage", tags: ["Temperature Control", "Inventory Management", "FIFO", "Warehouse Management", "Stock Rotation"] }
+  ];
 
-    const nodes = new vis.DataSet([]);
-    const edges = new vis.DataSet([]);
-    const nodeConnections = {};
+  const nodes = new vis.DataSet();
+  const edges = new vis.DataSet();
+  const nodeConnections = {};
 
-    supplyChainData.forEach(entity => {
-      const entityNode = {
-        id: entity.id,
-        label: entity.title,
-        title: `<h3>${entity.title}</h3><ul>${entity.tags.map(tag => `<li>${tag}</li>`).join('')}</ul>`,
-        group: "entity",
-        size: entity.tags.length * 5
-      };
-      nodes.add(entityNode);
-
-      entity.tags.forEach(tag => {
-        const tagNode = nodes.get(tag);
-        if (!tagNode) {
-          nodes.add({ id: tag, label: tag, group: "tag" });
-        }
-        edges.add({ from: entity.id, to: tag });
-
-        nodeConnections[tag] = (nodeConnections[tag] || 0) + 1;
-        nodeConnections[entity.id] = (nodeConnections[entity.id] || 0) + 1;
-      });
+  supplyChainNodes.forEach(node => {
+    nodes.add({
+      id: node.id,
+      label: node.title,
+      title: "<h3>" + node.title + "</h3><ul>" + node.tags.map(tag => "<li>" + tag + "</li>").join("") + "</ul>",
+      group: "facility",
+      size: node.tags.length * 3,
+      font: { size: 0 }
     });
 
-    nodes.forEach(node => {
-      const connectionCount = nodeConnections[node.id] || 0;
-      node.size = connectionCount * 5;
-      nodes.update(node);
-    });
-
-    const container = document.getElementById("supply-chain-graph");
-    const data = { nodes: nodes, edges: edges };
-    const options = {
-      nodes: {
-        shape: 'dot',
-        font: { size: 16 },
-      },
-      physics: {
-        enabled: false,
-        solver: 'forceAtlas2Based',
-      },
-      interaction: {
-        hover: true,
-        zoomView: true,
-        zoomSpeed: 0.5,
-        initialScale: 0.2,
-      },
-      layout: {
-        randomSeed: 2,
-        hierarchical: true,
-      },
-    };
-
-    const network = new vis.Network(container, data, options);
-
-    // Set initial zoom and position
-    network.moveTo({
-      position: { x: 0, y: 0 },
-      scale: .3,
-    });
-
-    const toggleButton = document.querySelector(".toggle-physics-button");
-    let physicsEnabled = false;
-    let currentLayout = "hierarchical";
-
-    toggleButton.addEventListener("click", function () {
-      physicsEnabled = !physicsEnabled;
-      options.physics.enabled = physicsEnabled;
-      if (currentLayout === "hierarchical") {
-        options.layout.hierarchical = false;
-        currentLayout = "random";
-      } else {
-        options.layout.hierarchical = true;
-        currentLayout = "hierarchical";
+    node.tags.forEach(tag => {
+      if (!nodes.get(tag)) {
+        nodes.add({ 
+          id: tag, 
+          label: tag, 
+          group: "process",
+          font: { size: 0 }
+        });
       }
-      network.setOptions(options);
-      toggleButton.textContent = physicsEnabled ? "Disable Physics" : "Enable Physics";
+      edges.add({ 
+        from: node.id, 
+        to: tag,
+        color: { color: "#2B7CE9", opacity: 0.8 }
+      });
+
+      nodeConnections[tag] = (nodeConnections[tag] || 0) + 1;
+      nodeConnections[node.id] = (nodeConnections[node.id] || 0) + 1;
     });
   });
-</script>
 
+  nodes.forEach(node => {
+    const connectionCount = nodeConnections[node.id] || 0;
+    node.size = connectionCount * 3;
+    nodes.update(node);
+  });
+
+  const container = document.getElementById("supply-chain-graph");
+  const data = { nodes, edges };
+  
+  const options = {
+    nodes: {
+      shape: "dot",
+      color: {
+        background: "#4CAF50",
+        border: "#2E7D32",
+        highlight: {
+          background: "#81C784",
+          border: "#2E7D32"
+        }
+      }
+    },
+    edges: {
+      smooth: {
+        type: "continuous"
+      },
+      color: {
+        color: "#2B7CE9",
+        opacity: 0.8
+      }
+    },
+    physics: {
+      enabled: false
+    },
+    interaction: {
+      hover: true,
+      zoomView: true,
+      dragView: true,
+      zoomSpeed: 0.5,
+      dragNodes: true
+    },
+    layout: {
+      randomSeed: 2,
+      improvedLayout: false,
+      circular: true
+    }
+  };
+
+  const network = new vis.Network(container, data, options);
+  
+  network.once("stabilized", () => {
+    network.moveTo({
+      position: { x: 0, y: 0 },
+      scale: 0.3
+    });
+  });
+
+  const toggleButton = document.querySelector(".toggle-physics-button");
+  let physicsEnabled = false;
+  let currentLayout = "circular";
+
+  function updateNodeLabels(showLabels) {
+    const allNodes = nodes.get();
+    allNodes.forEach(node => {
+      nodes.update({
+        id: node.id,
+        font: { size: showLabels ? (node.group === "facility" ? 16 : 14) : 0 }
+      });
+    });
+  }
+
+  toggleButton.addEventListener("click", function() {
+    physicsEnabled = !physicsEnabled;
+
+    // Toggle layout and node labels
+    if (currentLayout === "circular") {
+      options.layout.randomSeed = 2;
+      options.layout.circular = false;
+      currentLayout = "random";
+      updateNodeLabels(true);
+    } else {
+      options.layout.randomSeed = 2;
+      options.layout.circular = true;
+      currentLayout = "circular";
+      updateNodeLabels(false);
+    }
+    
+    options.physics.enabled = physicsEnabled;
+    network.setOptions(options);
+    toggleButton.textContent = physicsEnabled ? "Lock Positions" : "Unlock Positions";
+  });
+});
+</script>
 </body>
 </html>
