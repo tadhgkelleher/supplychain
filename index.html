@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supply Chain Connections</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet">
+  <style>
+    #supply-chain-graph-container {
+      position: relative;
+      background-color: black;
+      margin: 0 auto;
+      width: 100%;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #supply-chain-graph {
+      height: 700px;
+      width: 100%;
+    }
+
+    .toggle-physics-button {
+      background-color: #4a90e2;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      font-size: 18px;
+      margin: 0 auto;
+      cursor: pointer;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 10px;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+
+<div id="supply-chain-graph-container">
+  <button class="toggle-physics-button">Toggle Physics</button>
+  <div id="supply-chain-graph"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const supplyChainData = [
+      { id: 1, title: "Supplier A", tags: ["Raw Materials", "Mining", "Steel"] },
+      { id: 2, title: "Supplier B", tags: ["Raw Materials", "Mining", "Copper"] },
+      { id: 3, title: "Manufacturer C", tags: ["Steel", "Fabrication", "Automobile"] },
+      { id: 4, title: "Manufacturer D", tags: ["Copper", "Fabrication", "Electronics"] },
+      { id: 5, title: "Distributor E", tags: ["Automobile", "Logistics"] },
+      { id: 6, title: "Distributor F", tags: ["Electronics", "Logistics"] },
+      { id: 7, title: "Retailer G", tags: ["Automobile", "Sales"] },
+      { id: 8, title: "Retailer H", tags: ["Electronics", "Sales"] },
+      { id: 9, title: "Consumer I", tags: ["Automobile", "Consumer"] },
+      { id: 10, title: "Consumer J", tags: ["Electronics", "Consumer"] },
+    ];
+
+    const nodes = new vis.DataSet([]);
+    const edges = new vis.DataSet([]);
+    const nodeConnections = {};
+
+    supplyChainData.forEach(entity => {
+      const entityNode = {
+        id: entity.id,
+        label: entity.title,
+        title: `<h3>${entity.title}</h3><ul>${entity.tags.map(tag => `<li>${tag}</li>`).join('')}</ul>`,
+        group: "entity",
+        size: entity.tags.length * 5
+      };
+      nodes.add(entityNode);
+
+      entity.tags.forEach(tag => {
+        const tagNode = nodes.get(tag);
+        if (!tagNode) {
+          nodes.add({ id: tag, label: tag, group: "tag" });
+        }
+        edges.add({ from: entity.id, to: tag });
+
+        nodeConnections[tag] = (nodeConnections[tag] || 0) + 1;
+        nodeConnections[entity.id] = (nodeConnections[entity.id] || 0) + 1;
+      });
+    });
+
+    nodes.forEach(node => {
+      const connectionCount = nodeConnections[node.id] || 0;
+      node.size = connectionCount * 5;
+      nodes.update(node);
+    });
+
+    const container = document.getElementById("supply-chain-graph");
+    const data = { nodes: nodes, edges: edges };
+    const options = {
+      nodes: {
+        shape: 'dot',
+        font: { size: 16 },
+      },
+      physics: {
+        enabled: false,
+        solver: 'forceAtlas2Based',
+      },
+      interaction: {
+        hover: true,
+        zoomView: true,
+        zoomSpeed: 0.5,
+        initialScale: 0.2,
+      },
+      layout: {
+        randomSeed: 2,
+        hierarchical: true,
+      },
+    };
+
+    const network = new vis.Network(container, data, options);
+
+    // Set initial zoom and position
+    network.moveTo({
+      position: { x: 0, y: 0 },
+      scale: .3,
+    });
+
+    const toggleButton = document.querySelector(".toggle-physics-button");
+    let physicsEnabled = false;
+    let currentLayout = "hierarchical";
+
+    toggleButton.addEventListener("click", function () {
+      physicsEnabled = !physicsEnabled;
+      options.physics.enabled = physicsEnabled;
+      if (currentLayout === "hierarchical") {
+        options.layout.hierarchical = false;
+        currentLayout = "random";
+      } else {
+        options.layout.hierarchical = true;
+        currentLayout = "hierarchical";
+      }
+      network.setOptions(options);
+      toggleButton.textContent = physicsEnabled ? "Disable Physics" : "Enable Physics";
+    });
+  });
+</script>
+
+</body>
+</html>
