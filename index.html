@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supply Chain Network</title>
+  <title>Exploding Network</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet">
   <style>
-    #supply-chain-container {
+    #related-posts-container {
       position: relative;
       background-color: #f8f9fa;
       margin: 0 auto;
@@ -17,7 +17,7 @@
       align-items: center;
     }
 
-    #supply-chain-graph {
+    #related-posts-graph {
       height: 700px;
       width: 100%;
       background-color: white;
@@ -47,9 +47,10 @@
   </style>
 </head>
 <body>
-<div id="supply-chain-container">
+
+<div id="related-posts-container">
   <button class="toggle-physics-button">Unlock Positions</button>
-  <div id="supply-chain-graph"></div>
+  <div id="related-posts-graph"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
@@ -108,51 +109,33 @@ document.addEventListener("DOMContentLoaded", function() {
     nodes.update(node);
   });
 
-  const container = document.getElementById("supply-chain-graph");
+  const container = document.getElementById("related-posts-graph");
   const data = { nodes, edges };
-  
+
   const options = {
     nodes: {
-      shape: "dot",
-      color: {
-        background: "#4CAF50",
-        border: "#2E7D32",
-        highlight: {
-          background: "#81C784",
-          border: "#2E7D32"
-        }
-      }
-    },
-    edges: {
-      smooth: {
-        type: "continuous"
-      },
-      color: {
-        color: "#2B7CE9",
-        opacity: 0.8
-      }
+      shape: 'dot',
+      font: { size: 16 },
     },
     physics: {
       enabled: false,
-      stabilization: { iterations: 200 },
-      hierarchicalRepulsion: { nodeDistance: 200 }
+      solver: 'forceAtlas2Based',
     },
     interaction: {
       hover: true,
-      zoomView: true,
-      dragView: true,
-      zoomSpeed: 0.5,
-      dragNodes: true
+      zoomView: true,  
+      zoomSpeed: 0.5,  
+      initialScale: 0.2, 
     },
     layout: {
       randomSeed: 2,
       improvedLayout: false,
-      circular: true
+      hierarchicalRepulsion: { nodeDistance: 200 }
     }
   };
 
   const network = new vis.Network(container, data, options);
-  
+
   network.once("stabilized", () => {
     network.moveTo({
       position: { x: 0, y: 0 },
@@ -162,36 +145,20 @@ document.addEventListener("DOMContentLoaded", function() {
 
   const toggleButton = document.querySelector(".toggle-physics-button");
   let physicsEnabled = false;
-  let currentLayout = "circular";
-
-  function updateNodeLabels(showLabels) {
-    const allNodes = nodes.get();
-    allNodes.forEach(node => {
-      nodes.update({
-        id: node.id,
-        font: { size: showLabels ? (node.group === "facility" ? 16 : 14) : 0 }
-      });
-    });
-  }
 
   toggleButton.addEventListener("click", function() {
     physicsEnabled = !physicsEnabled;
 
-    if (currentLayout === "circular") {
-      // Switch to a more organic random layout with physics
-      options.layout.randomSeed = 2;
-      options.layout.circular = false;
-      currentLayout = "random";
-      updateNodeLabels(true);
+    // Start the explosion effect with force-directed layout
+    if (physicsEnabled) {
+      options.physics.enabled = true;
+      options.layout.hierarchicalRepulsion = { nodeDistance: 200 };
     } else {
-      // Return to the circular layout, but without immediate jump
+      // Revert back to circular layout
+      options.physics.enabled = false;
       options.layout.randomSeed = 2;
-      options.layout.circular = true;
-      currentLayout = "circular";
-      updateNodeLabels(false);
     }
-    
-    options.physics.enabled = physicsEnabled;
+
     network.setOptions(options);
 
     // Apply smooth transition by enabling physics for gradual movement
@@ -199,11 +166,12 @@ document.addEventListener("DOMContentLoaded", function() {
     network.stabilize();
     setTimeout(() => {
       network.physics.setOptions({ enabled: false });
-    }, 2000); // Physics remains active for 2 seconds for the explosion effect
+    }, 2000); 
 
     toggleButton.textContent = physicsEnabled ? "Lock Positions" : "Unlock Positions";
   });
 });
 </script>
+
 </body>
 </html>
