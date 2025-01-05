@@ -175,7 +175,6 @@ document.addEventListener("DOMContentLoaded", function() {
   toggleButton.addEventListener("click", function() {
     physicsEnabled = !physicsEnabled;
 
-    // Toggle layout and node labels
     if (currentLayout === "circular") {
       options.layout.randomSeed = 2;
       options.layout.circular = false;
@@ -190,6 +189,14 @@ document.addEventListener("DOMContentLoaded", function() {
     
     options.physics.enabled = physicsEnabled;
     network.setOptions(options);
+    
+    // Smooth transition by temporarily enabling physics and then turning it off
+    network.physics.setOptions({ enabled: true });
+    network.stabilize();
+    setTimeout(() => {
+      network.physics.setOptions({ enabled: false });
+    }, 1000); // Disable physics after stabilization
+
     toggleButton.textContent = physicsEnabled ? "Lock Positions" : "Unlock Positions";
   });
 });
