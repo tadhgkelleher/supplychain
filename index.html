@@ -176,11 +176,13 @@ document.addEventListener("DOMContentLoaded", function() {
     physicsEnabled = !physicsEnabled;
 
     if (currentLayout === "circular") {
+      // Switch to a more organic random layout with physics
       options.layout.randomSeed = 2;
       options.layout.circular = false;
       currentLayout = "random";
       updateNodeLabels(true);
     } else {
+      // Return to the circular layout, but without immediate jump
       options.layout.randomSeed = 2;
       options.layout.circular = true;
       currentLayout = "circular";
@@ -189,8 +191,8 @@ document.addEventListener("DOMContentLoaded", function() {
     
     options.physics.enabled = physicsEnabled;
     network.setOptions(options);
-    
-    // Smooth transition by temporarily enabling physics and then turning it off
+
+    // Apply smooth transition by enabling physics
     network.physics.setOptions({ enabled: true });
     network.stabilize();
     setTimeout(() => {
