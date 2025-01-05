@@ -136,6 +136,19 @@ document.addEventListener("DOMContentLoaded", function() {
 
   const network = new vis.Network(container, data, options);
 
+  // Set up initial circular layout using random positioning
+  function setCircularLayout() {
+    const radius = 150;
+    nodes.forEach((node, index) => {
+      const angle = (index / nodes.length) * 2 * Math.PI;
+      node.x = radius * Math.cos(angle);
+      node.y = radius * Math.sin(angle);
+      nodes.update(node);
+    });
+  }
+
+  setCircularLayout();
+
   network.once("stabilized", () => {
     network.moveTo({
       position: { x: 0, y: 0 },
@@ -153,20 +166,17 @@ document.addEventListener("DOMContentLoaded", function() {
     if (physicsEnabled) {
       options.physics.enabled = true;
       options.layout.hierarchicalRepulsion = { nodeDistance: 200 };
+      network.setOptions(options);
+
+      // Trigger animation to smoothly move nodes outward
+      network.stabilize();
     } else {
       // Revert back to circular layout
       options.physics.enabled = false;
       options.layout.randomSeed = 2;
+      network.setOptions(options);
+      setCircularLayout();  // Restore circular layout
     }
-
-    network.setOptions(options);
-
-    // Apply smooth transition by enabling physics for gradual movement
-    network.physics.setOptions({ enabled: true });
-    network.stabilize();
-    setTimeout(() => {
-      network.physics.setOptions({ enabled: false });
-    }, 2000); 
 
     toggleButton.textContent = physicsEnabled ? "Lock Positions" : "Unlock Positions";
   });
